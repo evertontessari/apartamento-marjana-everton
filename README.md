@@ -48,7 +48,9 @@ Imagens também são salvas no navegador, então prefira fotos leves para melhor
 Use o Supabase (plano grátis) para guardar os dados na nuvem.
 
 1. Crie um projeto em https://supabase.com.
-2. No SQL Editor, rode:
+2. No SQL Editor, rode o conteúdo de `supabase-setup.sql` (arquivo deste projeto).
+
+SQL de referência:
 
 ```sql
 create table if not exists public.shopping_lists (
