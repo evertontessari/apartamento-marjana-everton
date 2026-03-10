@@ -55,7 +55,7 @@ function loadCloudConfig() {
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return;
-    cloudConfig.enabled = parsed.enabled !== false;
+    cloudConfig.enabled = cloudConfig.enabled === true || parsed.enabled !== false;
     cloudConfig.supabaseUrl = parsed.supabaseUrl || cloudConfig.supabaseUrl || "";
     cloudConfig.supabaseAnonKey = parsed.supabaseAnonKey || cloudConfig.supabaseAnonKey || "";
     cloudConfig.listId = parsed.listId || cloudConfig.listId || "apartamento-marjana-everton";
