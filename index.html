@@ -34,95 +34,106 @@
         </article>
       </section>
 
-      <section class="grid forms">
-        <article class="card">
-          <h2>Novo produto</h2>
-          <form id="productForm" class="form">
-            <label>
-              Nome do produto
-              <input id="productName" type="text" required placeholder="Ex.: Arroz 5kg" />
-            </label>
-            <label>
-              Categoria
-              <select id="productCategory" required>
-                <option value="Eletrodoméstico">Eletrodoméstico</option>
-                <option value="Móvel">Móvel</option>
-                <option value="Eletrônico">Eletrônico</option>
-                <option value="Outros">Outros</option>
-              </select>
-            </label>
-            <label>
-              Observação
-              <input id="productNote" type="text" placeholder="Ex.: preferência de marca" />
-            </label>
-            <label>
-              Foto do produto
-              <input id="productPhoto" type="file" accept="image/*" />
-            </label>
-            <button type="submit">Adicionar produto</button>
-          </form>
-        </article>
-
-        <article class="card">
-          <h2>Novo preço</h2>
-          <form id="priceForm" class="form">
-            <label>
-              Produto
-              <select id="priceProduct" required>
-                <option value="">Selecione</option>
-              </select>
-            </label>
-            <label>
-              Loja
-              <input id="priceStore" type="text" required placeholder="Ex.: Mercado Central" />
-            </label>
-            <label>
-              Preço (R$)
-              <input id="priceValue" type="number" step="0.01" min="0" required placeholder="0,00" />
-            </label>
-            <label>
-              Data
-              <input id="priceDate" type="date" required />
-            </label>
-            <label>
-              Anotação
-              <input id="priceNote" type="text" placeholder="Ex.: promoção de fim de semana" />
-            </label>
-            <button type="submit">Registrar preço</button>
-          </form>
-        </article>
+      <section class="tab-switch" aria-label="Navegação por abas">
+        <button id="tabBtnProducts" class="tab-btn active" data-tab="products" aria-selected="true">Produtos</button>
+        <button id="tabBtnPrices" class="tab-btn" data-tab="prices" aria-selected="false">Preços</button>
       </section>
 
-      <section class="card" aria-label="Tabela de produtos">
-        <div class="table-header">
-          <h2>Produtos monitorados</h2>
-          <input id="searchInput" type="search" placeholder="Buscar produto..." />
-        </div>
+      <section id="tabProductsPanel" class="tab-panel active" aria-label="Aba produtos">
+        <section class="grid forms">
+          <article class="card">
+            <h2>Novo produto</h2>
+            <form id="productForm" class="form">
+              <label>
+                Nome do produto
+                <input id="productName" type="text" required placeholder="Ex.: Geladeira Frost Free" />
+              </label>
+              <label>
+                Categoria
+                <select id="productCategory" required>
+                  <option value="Eletrodoméstico">Eletrodoméstico</option>
+                  <option value="Móvel">Móvel</option>
+                  <option value="Eletrônico">Eletrônico</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </label>
+              <label>
+                Observação
+                <input id="productNote" type="text" placeholder="Ex.: preferência de marca" />
+              </label>
+              <label>
+                Foto do produto
+                <input id="productPhoto" type="file" accept="image/*" />
+              </label>
+              <button type="submit">Adicionar produto</button>
+            </form>
+          </article>
+        </section>
 
-        <div id="productsMobileList" class="mobile-list"></div>
+        <section class="card" aria-label="Tabela de produtos">
+          <div class="table-header">
+            <h2>Produtos monitorados</h2>
+            <input id="searchInput" type="search" placeholder="Buscar produto..." />
+          </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>Último preço</th>
-                <th>Menor preço</th>
-                <th>Variação</th>
-                <th>Última loja</th>
-                <th>Atualizado em</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="productsTableBody"></tbody>
-          </table>
-        </div>
+          <div id="productsMobileList" class="mobile-list"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Último preço</th>
+                  <th>Menor preço</th>
+                  <th>Variação</th>
+                  <th>Última loja</th>
+                  <th>Atualizado em</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Histórico de preços">
+          <h2>Histórico do produto</h2>
+          <p id="historyTitle">Selecione um produto para ver o histórico.</p>
+          <ul id="historyList" class="history-list"></ul>
+        </section>
       </section>
 
-      <section class="card" aria-label="Histórico de preços">
-        <h2>Histórico do produto</h2>
-        <p id="historyTitle">Selecione um produto para ver o histórico.</p>
-        <ul id="historyList" class="history-list"></ul>
+      <section id="tabPricesPanel" class="tab-panel" aria-label="Aba preços">
+        <section class="grid forms">
+          <article class="card">
+            <h2>Novo preço</h2>
+            <form id="priceForm" class="form">
+              <label>
+                Produto
+                <select id="priceProduct" required>
+                  <option value="">Selecione</option>
+                </select>
+              </label>
+              <label>
+                Loja
+                <input id="priceStore" type="text" required placeholder="Ex.: Magazine Luiza" />
+              </label>
+              <label>
+                Preço (R$)
+                <input id="priceValue" type="number" step="0.01" min="0" required placeholder="0,00" />
+              </label>
+              <label>
+                Data
+                <input id="priceDate" type="date" required />
+              </label>
+              <label>
+                Anotação
+                <input id="priceNote" type="text" placeholder="Ex.: frete grátis" />
+              </label>
+              <button type="submit">Registrar preço</button>
+            </form>
+          </article>
+        </section>
       </section>
     </main>
     <script src="cloud-config.js"></script>

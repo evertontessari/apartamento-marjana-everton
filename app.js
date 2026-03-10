@@ -5,6 +5,7 @@ const state = {
   products: [],
   selectedProductId: null,
   search: "",
+  activeTab: "products",
 };
 
 const els = {
@@ -31,6 +32,10 @@ const els = {
   historyList: document.getElementById("historyList"),
   searchInput: document.getElementById("searchInput"),
   syncStatus: document.getElementById("syncStatus"),
+  tabBtnProducts: document.getElementById("tabBtnProducts"),
+  tabBtnPrices: document.getElementById("tabBtnPrices"),
+  tabProductsPanel: document.getElementById("tabProductsPanel"),
+  tabPricesPanel: document.getElementById("tabPricesPanel"),
 };
 
 const cloudConfig = window.CLOUD_CONFIG || { enabled: false };
@@ -405,6 +410,19 @@ function renderHistory() {
     });
 }
 
+function switchTab(tab) {
+  state.activeTab = tab;
+  const productsActive = tab === "products";
+
+  els.tabBtnProducts.classList.toggle("active", productsActive);
+  els.tabBtnPrices.classList.toggle("active", !productsActive);
+  els.tabBtnProducts.setAttribute("aria-selected", productsActive ? "true" : "false");
+  els.tabBtnPrices.setAttribute("aria-selected", productsActive ? "false" : "true");
+
+  els.tabProductsPanel.classList.toggle("active", productsActive);
+  els.tabPricesPanel.classList.toggle("active", !productsActive);
+}
+
 function refreshUI() {
   renderSummary();
   renderProductOptions();
@@ -472,6 +490,7 @@ function addPrice(event) {
   saveState();
   void pushToCloud();
   refreshUI();
+  switchTab("products");
 }
 
 function onTableClick(event) {
@@ -509,6 +528,15 @@ function onTableClick(event) {
 function onSearch(event) {
   state.search = event.target.value;
   renderTable();
+  renderMobileList();
+}
+
+function onTabClick(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLButtonElement)) return;
+  const tab = target.dataset.tab;
+  if (tab !== "products" && tab !== "prices") return;
+  switchTab(tab);
 }
 
 function setupEvents() {
@@ -517,12 +545,15 @@ function setupEvents() {
   els.productsTableBody.addEventListener("click", onTableClick);
   els.productsMobileList.addEventListener("click", onTableClick);
   els.searchInput.addEventListener("input", onSearch);
+  els.tabBtnProducts.addEventListener("click", onTabClick);
+  els.tabBtnPrices.addEventListener("click", onTabClick);
 }
 
 async function init() {
   loadState();
   els.priceDate.value = todayISO();
   setupEvents();
+  switchTab("products");
   refreshUI();
 
   if (cloudEnabled()) {

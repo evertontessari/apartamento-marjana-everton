@@ -39,6 +39,28 @@ body {
   color: var(--muted);
 }
 
+.sync-status {
+  margin-top: 0.4rem;
+  display: inline-flex;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.sync-status.ok {
+  color: #166534;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.sync-status.warn {
+  color: #9a3412;
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
 .hero-art {
   margin-top: 0.8rem;
   padding: 1rem;
@@ -126,6 +148,39 @@ body {
 
 .forms {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.tab-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.tab-btn {
+  border: 0;
+  background: transparent;
+  color: #4b5563;
+  border-radius: 10px;
+  min-height: 42px;
+  font-weight: 600;
+}
+
+.tab-btn.active {
+  background: #e8f0ff;
+  color: #1d4ed8;
+}
+
+.tab-panel {
+  display: none;
+  gap: 0.85rem;
+}
+
+.tab-panel.active {
+  display: grid;
 }
 
 .card {
@@ -401,6 +456,16 @@ th {
   .hero-art p {
     font-size: 0.84rem;
     max-width: 85%;
+  }
+
+  .sync-status {
+    font-size: 0.74rem;
+  }
+
+  .tab-switch {
+    position: sticky;
+    top: 0.3rem;
+    z-index: 5;
   }
 
   .card {
