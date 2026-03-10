@@ -134,6 +134,26 @@ function cloudBaseUrl() {
   return `${cloudConfig.supabaseUrl.replace(/\/$/, "")}/rest/v1/shopping_lists`;
 }
 
+async function parseSupabaseError(response) {
+  let detail = "";
+  try {
+    const body = await response.json();
+    detail = body?.message || body?.hint || body?.details || "";
+  } catch {
+    detail = "";
+  }
+
+  if (response.status === 404) {
+    return "Tabela shopping_lists não encontrada. Execute o script supabase-setup.sql no SQL Editor.";
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    return "Chave inválida ou sem permissão. Use a anon/public key correta do projeto.";
+  }
+
+  return detail || `Erro HTTP ${response.status}`;
+}
+
 async function upsertCloudPayload() {
   const response = await fetch(cloudBaseUrl(), {
     method: "POST",
@@ -153,7 +173,7 @@ async function upsertCloudPayload() {
   });
 
   if (!response.ok) {
-    throw new Error(`Erro ao salvar nuvem (${response.status})`);
+      throw new Error(await parseSupabaseError(response));
   }
 }
 
@@ -177,7 +197,7 @@ async function pullFromCloud() {
     });
 
     if (!response.ok) {
-      throw new Error(`Erro ao carregar nuvem (${response.status})`);
+        throw new Error(await parseSupabaseError(response));
     }
 
     const data = await response.json();
