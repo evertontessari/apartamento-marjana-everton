@@ -644,17 +644,39 @@ async function onCloudFormSubmit(event) {
   }
 }
 
+function onDocumentSubmit(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLFormElement)) return;
+  if (target.id !== "cloudForm") return;
+  void onCloudFormSubmit(event);
+}
+
 function setupEvents() {
-  els.productForm.addEventListener("submit", addProduct);
-  els.priceForm.addEventListener("submit", addPrice);
-  els.productsTableBody.addEventListener("click", onTableClick);
-  els.productsMobileList.addEventListener("click", onTableClick);
-  els.searchInput.addEventListener("input", onSearch);
-  els.tabBtnProducts.addEventListener("click", onTabClick);
-  els.tabBtnPrices.addEventListener("click", onTabClick);
+  if (els.productForm) {
+    els.productForm.addEventListener("submit", addProduct);
+  }
+  if (els.priceForm) {
+    els.priceForm.addEventListener("submit", addPrice);
+  }
+  if (els.productsTableBody) {
+    els.productsTableBody.addEventListener("click", onTableClick);
+  }
+  if (els.productsMobileList) {
+    els.productsMobileList.addEventListener("click", onTableClick);
+  }
+  if (els.searchInput) {
+    els.searchInput.addEventListener("input", onSearch);
+  }
+  if (els.tabBtnProducts) {
+    els.tabBtnProducts.addEventListener("click", onTabClick);
+  }
+  if (els.tabBtnPrices) {
+    els.tabBtnPrices.addEventListener("click", onTabClick);
+  }
   if (els.cloudForm) {
     els.cloudForm.addEventListener("submit", onCloudFormSubmit);
   }
+  document.addEventListener("submit", onDocumentSubmit);
 }
 
 async function init() {
