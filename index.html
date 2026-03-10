@@ -7,14 +7,14 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Monitor de Preços de Compras</title>
-    <link rel="stylesheet" href="styles.css?v=20260310-7" />
+    <link rel="stylesheet" href="styles.css?v=20260310-8" />
   </head>
   <body>
     <header class="topbar">
       <h1>Monitor de Preços</h1>
       <p>Anote e acompanhe os preços dos itens que você precisa comprar.</p>
       <p id="syncStatus" class="sync-status">Sincronização: local (somente neste aparelho)</p>
-      <p class="build-version">Versão: 20260310-7</p>
+      <p class="build-version">Versão: 20260310-8</p>
       <section class="hero-art" aria-label="Identidade do apartamento">
         <div class="hero-badge">Apartamento</div>
         <h2>Marjana e Everton</h2>
@@ -41,6 +41,7 @@
       <section class="tab-switch" aria-label="Navegação por abas">
         <button id="tabBtnProducts" class="tab-btn active" data-tab="products" aria-selected="true">Produtos</button>
         <button id="tabBtnPrices" class="tab-btn" data-tab="prices" aria-selected="false">Preços</button>
+        <button id="tabBtnConfig" class="tab-btn" data-tab="config" aria-selected="false">Config</button>
       </section>
 
       <section id="tabProductsPanel" class="tab-panel active" aria-label="Aba produtos">
@@ -137,7 +138,11 @@
               <button type="submit">Registrar preço</button>
             </form>
           </article>
+        </section>
+      </section>
 
+      <section id="tabConfigPanel" class="tab-panel" aria-label="Aba de configuração">
+        <section class="grid forms">
           <article class="card">
             <h2>Configurar nuvem (Supabase)</h2>
             <form id="cloudForm" class="form">
@@ -160,7 +165,7 @@
         </section>
       </section>
     </main>
-    <script src="cloud-config.js?v=20260310-7"></script>
-    <script src="app.js?v=20260310-7"></script>
+    <script src="cloud-config.js?v=20260310-8"></script>
+    <script src="app.js?v=20260310-8"></script>
   </body>
 </html>

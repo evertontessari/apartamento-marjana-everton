@@ -177,7 +177,7 @@ body {
 
 .tab-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 0.45rem;
   padding: 0.25rem;
   border: 1px solid var(--border);

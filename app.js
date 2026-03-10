@@ -35,8 +35,10 @@ const els = {
   syncStatus: document.getElementById("syncStatus"),
   tabBtnProducts: document.getElementById("tabBtnProducts"),
   tabBtnPrices: document.getElementById("tabBtnPrices"),
+  tabBtnConfig: document.getElementById("tabBtnConfig"),
   tabProductsPanel: document.getElementById("tabProductsPanel"),
   tabPricesPanel: document.getElementById("tabPricesPanel"),
+  tabConfigPanel: document.getElementById("tabConfigPanel"),
   cloudForm: document.getElementById("cloudForm"),
   cloudUrl: document.getElementById("cloudUrl"),
   cloudKey: document.getElementById("cloudKey"),
@@ -57,9 +59,16 @@ function loadCloudConfig() {
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return;
-    cloudConfig.enabled = cloudConfig.enabled === true || parsed.enabled !== false;
-    cloudConfig.supabaseUrl = parsed.supabaseUrl || cloudConfig.supabaseUrl || "";
-    cloudConfig.supabaseAnonKey = parsed.supabaseAnonKey || cloudConfig.supabaseAnonKey || "";
+    const hasDefaultCloud =
+      cloudConfig.enabled !== false &&
+      !!cloudConfig.supabaseUrl &&
+      !!cloudConfig.supabaseAnonKey;
+
+    cloudConfig.enabled = hasDefaultCloud ? true : parsed.enabled !== false;
+    cloudConfig.supabaseUrl = hasDefaultCloud ? cloudConfig.supabaseUrl : parsed.supabaseUrl || cloudConfig.supabaseUrl || "";
+    cloudConfig.supabaseAnonKey = hasDefaultCloud
+      ? cloudConfig.supabaseAnonKey
+      : parsed.supabaseAnonKey || cloudConfig.supabaseAnonKey || "";
     cloudConfig.listId = parsed.listId || cloudConfig.listId || "apartamento-marjana-everton";
   } catch {
     localStorage.removeItem(CLOUD_CONFIG_KEY);
@@ -506,14 +515,19 @@ function renderHistory() {
 function switchTab(tab) {
   state.activeTab = tab;
   const productsActive = tab === "products";
+  const pricesActive = tab === "prices";
+  const configActive = tab === "config";
 
   els.tabBtnProducts.classList.toggle("active", productsActive);
-  els.tabBtnPrices.classList.toggle("active", !productsActive);
+  els.tabBtnPrices.classList.toggle("active", pricesActive);
+  els.tabBtnConfig.classList.toggle("active", configActive);
   els.tabBtnProducts.setAttribute("aria-selected", productsActive ? "true" : "false");
-  els.tabBtnPrices.setAttribute("aria-selected", productsActive ? "false" : "true");
+  els.tabBtnPrices.setAttribute("aria-selected", pricesActive ? "true" : "false");
+  els.tabBtnConfig.setAttribute("aria-selected", configActive ? "true" : "false");
 
   els.tabProductsPanel.classList.toggle("active", productsActive);
-  els.tabPricesPanel.classList.toggle("active", !productsActive);
+  els.tabPricesPanel.classList.toggle("active", pricesActive);
+  els.tabConfigPanel.classList.toggle("active", configActive);
 }
 
 function refreshUI() {
@@ -628,7 +642,7 @@ function onTabClick(event) {
   const target = event.target;
   if (!(target instanceof HTMLButtonElement)) return;
   const tab = target.dataset.tab;
-  if (tab !== "products" && tab !== "prices") return;
+  if (tab !== "products" && tab !== "prices" && tab !== "config") return;
   switchTab(tab);
 }
 
@@ -692,6 +706,9 @@ function setupEvents() {
   }
   if (els.tabBtnPrices) {
     els.tabBtnPrices.addEventListener("click", onTabClick);
+  }
+  if (els.tabBtnConfig) {
+    els.tabBtnConfig.addEventListener("click", onTabClick);
   }
   if (els.cloudForm) {
     els.cloudForm.addEventListener("submit", onCloudFormSubmit);
