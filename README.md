@@ -42,3 +42,41 @@ Seu site ficará em algo como:
 
 Os dados ficam salvos no navegador/dispositivo usado. Se limpar dados do navegador, os registros podem ser perdidos.
 Imagens também são salvas no navegador, então prefira fotos leves para melhor desempenho no celular.
+
+## Sincronizar entre celular e computador (banco grátis)
+
+Use o Supabase (plano grátis) para guardar os dados na nuvem.
+
+1. Crie um projeto em https://supabase.com.
+2. No SQL Editor, rode:
+
+```sql
+create table if not exists public.shopping_lists (
+  list_id text primary key,
+  payload jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.shopping_lists enable row level security;
+
+create policy "read_all" on public.shopping_lists
+for select using (true);
+
+create policy "insert_all" on public.shopping_lists
+for insert with check (true);
+
+create policy "update_all" on public.shopping_lists
+for update using (true) with check (true);
+```
+
+3. Em **Project Settings > API**, copie:
+   - Project URL
+   - anon public key
+4. Edite `cloud-config.js`:
+   - `enabled: true`
+   - `supabaseUrl`: URL do projeto
+   - `supabaseAnonKey`: sua anon key
+   - `listId`: um nome único da sua lista (use o mesmo no celular e computador)
+5. Faça commit e push para atualizar o GitHub Pages.
+
+Quando estiver ativo, o topo do site mostra status de sincronização na nuvem.

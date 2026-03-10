@@ -1,4 +1,5 @@
 const STORAGE_KEY = "monitor-precos-v1";
+const CLOUD_PULL_INTERVAL_MS = 20000;
 
 const state = {
   products: [],
@@ -29,7 +30,11 @@ const els = {
   historyTitle: document.getElementById("historyTitle"),
   historyList: document.getElementById("historyList"),
   searchInput: document.getElementById("searchInput"),
+  syncStatus: document.getElementById("syncStatus"),
 };
+
+const cloudConfig = window.CLOUD_CONFIG || { enabled: false };
+let cloudSyncBusy = false;
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -53,6 +58,97 @@ function todayISO() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.products));
+}
+
+function setSyncStatus(message, tone = "") {
+  if (!els.syncStatus) return;
+  els.syncStatus.textContent = message;
+  els.syncStatus.className = `sync-status ${tone}`.trim();
+}
+
+function cloudEnabled() {
+  return (
+    !!cloudConfig.enabled &&
+    !!cloudConfig.supabaseUrl &&
+    !!cloudConfig.supabaseAnonKey &&
+    !!cloudConfig.listId
+  );
+}
+
+function cloudBaseUrl() {
+  return `${cloudConfig.supabaseUrl.replace(/\/$/, "")}/rest/v1/shopping_lists`;
+}
+
+async function pullFromCloud() {
+  if (!cloudEnabled() || cloudSyncBusy) return false;
+  cloudSyncBusy = true;
+  try {
+    const url = `${cloudBaseUrl()}?list_id=eq.${encodeURIComponent(cloudConfig.listId)}&select=payload,updated_at`;
+    const response = await fetch(url, {
+      headers: {
+        apikey: cloudConfig.supabaseAnonKey,
+        Authorization: `Bearer ${cloudConfig.supabaseAnonKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro ao carregar nuvem (${response.status})`);
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data) || !data.length || !data[0].payload) {
+      setSyncStatus("Sincronização ativa: nuvem conectada");
+      return false;
+    }
+
+    if (Array.isArray(data[0].payload)) {
+      state.products = data[0].payload;
+      saveState();
+      refreshUI();
+      setSyncStatus("Sincronização ativa: dados atualizados da nuvem", "ok");
+      return true;
+    }
+
+    return false;
+  } catch {
+    setSyncStatus("Sincronização com erro: usando dados locais", "warn");
+    return false;
+  } finally {
+    cloudSyncBusy = false;
+  }
+}
+
+async function pushToCloud() {
+  if (!cloudEnabled() || cloudSyncBusy) return;
+  cloudSyncBusy = true;
+  try {
+    const response = await fetch(cloudBaseUrl(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: cloudConfig.supabaseAnonKey,
+        Authorization: `Bearer ${cloudConfig.supabaseAnonKey}`,
+        Prefer: "resolution=merge-duplicates",
+      },
+      body: JSON.stringify([
+        {
+          list_id: cloudConfig.listId,
+          payload: state.products,
+          updated_at: new Date().toISOString(),
+        },
+      ]),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro ao salvar nuvem (${response.status})`);
+    }
+
+    setSyncStatus("Sincronização ativa: salvo na nuvem", "ok");
+  } catch {
+    setSyncStatus("Sincronização com erro: salvo apenas localmente", "warn");
+  } finally {
+    cloudSyncBusy = false;
+  }
 }
 
 function loadState() {
@@ -343,6 +439,7 @@ async function addProduct(event) {
 
   els.productForm.reset();
   saveState();
+  void pushToCloud();
   refreshUI();
 }
 
@@ -373,6 +470,7 @@ function addPrice(event) {
   els.priceDate.value = todayISO();
 
   saveState();
+  void pushToCloud();
   refreshUI();
 }
 
@@ -403,6 +501,7 @@ function onTableClick(event) {
     }
 
     saveState();
+    void pushToCloud();
     refreshUI();
   }
 }
@@ -420,11 +519,21 @@ function setupEvents() {
   els.searchInput.addEventListener("input", onSearch);
 }
 
-function init() {
+async function init() {
   loadState();
   els.priceDate.value = todayISO();
   setupEvents();
   refreshUI();
+
+  if (cloudEnabled()) {
+    setSyncStatus("Sincronização: conectando nuvem...");
+    await pullFromCloud();
+    window.setInterval(() => {
+      void pullFromCloud();
+    }, CLOUD_PULL_INTERVAL_MS);
+  } else {
+    setSyncStatus("Sincronização: local (somente neste aparelho)");
+  }
 }
 
-init();
+void init();
