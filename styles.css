@@ -67,6 +67,25 @@ body {
   color: #9ca3af;
 }
 
+.cloud-feedback {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.cloud-feedback.ok {
+  color: #166534;
+}
+
+.cloud-feedback.warn {
+  color: #9a3412;
+}
+
+#cloudSubmitBtn:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
 .hero-art {
   margin-top: 0.8rem;
   padding: 1rem;

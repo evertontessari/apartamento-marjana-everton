@@ -41,6 +41,8 @@ const els = {
   cloudUrl: document.getElementById("cloudUrl"),
   cloudKey: document.getElementById("cloudKey"),
   cloudListId: document.getElementById("cloudListId"),
+  cloudFeedback: document.getElementById("cloudFeedback"),
+  cloudSubmitBtn: document.getElementById("cloudSubmitBtn"),
 };
 
 const cloudConfig = {
@@ -113,6 +115,12 @@ function setSyncStatus(message, tone = "") {
   els.syncStatus.className = `sync-status ${tone}`.trim();
 }
 
+function setCloudFeedback(message, tone = "") {
+  if (!els.cloudFeedback) return;
+  els.cloudFeedback.textContent = message;
+  els.cloudFeedback.className = `cloud-feedback ${tone}`.trim();
+}
+
 function cloudEnabled() {
   return (
     cloudConfig.enabled !== false &&
@@ -177,8 +185,10 @@ async function pullFromCloud() {
       if (state.products.length) {
         await upsertCloudPayload();
         setSyncStatus("Sincronização ativa: dados enviados para nuvem", "ok");
+        setCloudFeedback("Conectado. Dados locais foram enviados para a nuvem.", "ok");
       } else {
         setSyncStatus("Sincronização ativa: nuvem conectada", "ok");
+        setCloudFeedback("Conectado com sucesso à nuvem.", "ok");
       }
       return false;
     }
@@ -188,12 +198,17 @@ async function pullFromCloud() {
       saveState();
       refreshUI();
       setSyncStatus("Sincronização ativa: dados atualizados da nuvem", "ok");
+      setCloudFeedback("Conectado. Dados carregados da nuvem.", "ok");
       return true;
     }
 
     return false;
-  } catch {
+  } catch (error) {
     setSyncStatus("Sincronização com erro: configure/verifique a nuvem", "warn");
+    setCloudFeedback(
+      `Falha ao conectar. Verifique URL/Key e execute o script do banco no Supabase. ${error instanceof Error ? error.message : ""}`,
+      "warn"
+    );
     return false;
   } finally {
     cloudSyncBusy = false;
@@ -599,15 +614,34 @@ function onTabClick(event) {
 
 async function onCloudFormSubmit(event) {
   event.preventDefault();
+  if (!els.cloudUrl || !els.cloudKey || !els.cloudListId) return;
+
   cloudConfig.supabaseUrl = els.cloudUrl.value.trim();
   cloudConfig.supabaseAnonKey = els.cloudKey.value.trim();
   cloudConfig.listId = els.cloudListId.value.trim() || "apartamento-marjana-everton";
   cloudConfig.enabled = true;
+
+  if (!cloudConfig.supabaseUrl || !cloudConfig.supabaseAnonKey) {
+    setCloudFeedback("Preencha Supabase URL e Anon Key.", "warn");
+    return;
+  }
+
+  if (els.cloudSubmitBtn) {
+    els.cloudSubmitBtn.disabled = true;
+    els.cloudSubmitBtn.textContent = "Conectando...";
+  }
+
   saveCloudConfig();
 
   setSyncStatus("Sincronização: conectando nuvem...");
+  setCloudFeedback("Tentando conectar no Supabase...", "");
   await pullFromCloud();
   startCloudPolling();
+
+  if (els.cloudSubmitBtn) {
+    els.cloudSubmitBtn.disabled = false;
+    els.cloudSubmitBtn.textContent = "Salvar e conectar nuvem";
+  }
 }
 
 function setupEvents() {
@@ -618,7 +652,9 @@ function setupEvents() {
   els.searchInput.addEventListener("input", onSearch);
   els.tabBtnProducts.addEventListener("click", onTabClick);
   els.tabBtnPrices.addEventListener("click", onTabClick);
-  els.cloudForm.addEventListener("submit", onCloudFormSubmit);
+  if (els.cloudForm) {
+    els.cloudForm.addEventListener("submit", onCloudFormSubmit);
+  }
 }
 
 async function init() {
