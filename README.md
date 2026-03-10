@@ -72,11 +72,10 @@ for update using (true) with check (true);
 3. Em **Project Settings > API**, copie:
    - Project URL
    - anon public key
-4. Edite `cloud-config.js`:
-   - `enabled: true`
-   - `supabaseUrl`: URL do projeto
-   - `supabaseAnonKey`: sua anon key
-   - `listId`: um nome único da sua lista (use o mesmo no celular e computador)
-5. Faça commit e push para atualizar o GitHub Pages.
+4. No site publicado, abra a aba **Preços > Configurar nuvem (Supabase)** e preencha:
+   - Supabase URL
+   - Supabase Anon Key
+   - ID da lista (use o mesmo no celular e computador)
+5. Toque em **Salvar e conectar nuvem**.
 
 Quando estiver ativo, o topo do site mostra status de sincronização na nuvem.

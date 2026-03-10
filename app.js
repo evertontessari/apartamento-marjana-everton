@@ -1,4 +1,5 @@
 const STORAGE_KEY = "monitor-precos-v1";
+const CLOUD_CONFIG_KEY = "monitor-cloud-config-v1";
 const CLOUD_PULL_INTERVAL_MS = 20000;
 
 const state = {
@@ -36,10 +37,51 @@ const els = {
   tabBtnPrices: document.getElementById("tabBtnPrices"),
   tabProductsPanel: document.getElementById("tabProductsPanel"),
   tabPricesPanel: document.getElementById("tabPricesPanel"),
+  cloudForm: document.getElementById("cloudForm"),
+  cloudUrl: document.getElementById("cloudUrl"),
+  cloudKey: document.getElementById("cloudKey"),
+  cloudListId: document.getElementById("cloudListId"),
 };
 
-const cloudConfig = window.CLOUD_CONFIG || { enabled: false };
+const cloudConfig = {
+  ...(window.CLOUD_CONFIG || {}),
+};
 let cloudSyncBusy = false;
+let cloudPullTimerId = null;
+
+function loadCloudConfig() {
+  const raw = localStorage.getItem(CLOUD_CONFIG_KEY);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return;
+    cloudConfig.enabled = parsed.enabled !== false;
+    cloudConfig.supabaseUrl = parsed.supabaseUrl || cloudConfig.supabaseUrl || "";
+    cloudConfig.supabaseAnonKey = parsed.supabaseAnonKey || cloudConfig.supabaseAnonKey || "";
+    cloudConfig.listId = parsed.listId || cloudConfig.listId || "apartamento-marjana-everton";
+  } catch {
+    localStorage.removeItem(CLOUD_CONFIG_KEY);
+  }
+}
+
+function saveCloudConfig() {
+  localStorage.setItem(
+    CLOUD_CONFIG_KEY,
+    JSON.stringify({
+      enabled: true,
+      supabaseUrl: cloudConfig.supabaseUrl || "",
+      supabaseAnonKey: cloudConfig.supabaseAnonKey || "",
+      listId: cloudConfig.listId || "apartamento-marjana-everton",
+    })
+  );
+}
+
+function hydrateCloudForm() {
+  if (!els.cloudForm) return;
+  els.cloudUrl.value = cloudConfig.supabaseUrl || "";
+  els.cloudKey.value = cloudConfig.supabaseAnonKey || "";
+  els.cloudListId.value = cloudConfig.listId || "apartamento-marjana-everton";
+}
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -73,7 +115,7 @@ function setSyncStatus(message, tone = "") {
 
 function cloudEnabled() {
   return (
-    !!cloudConfig.enabled &&
+    cloudConfig.enabled !== false &&
     !!cloudConfig.supabaseUrl &&
     !!cloudConfig.supabaseAnonKey &&
     !!cloudConfig.listId
@@ -82,6 +124,36 @@ function cloudEnabled() {
 
 function cloudBaseUrl() {
   return `${cloudConfig.supabaseUrl.replace(/\/$/, "")}/rest/v1/shopping_lists`;
+}
+
+async function upsertCloudPayload() {
+  const response = await fetch(cloudBaseUrl(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: cloudConfig.supabaseAnonKey,
+      Authorization: `Bearer ${cloudConfig.supabaseAnonKey}`,
+      Prefer: "resolution=merge-duplicates",
+    },
+    body: JSON.stringify([
+      {
+        list_id: cloudConfig.listId,
+        payload: state.products,
+        updated_at: new Date().toISOString(),
+      },
+    ]),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erro ao salvar nuvem (${response.status})`);
+  }
+}
+
+function startCloudPolling() {
+  if (cloudPullTimerId) return;
+  cloudPullTimerId = window.setInterval(() => {
+    void pullFromCloud();
+  }, CLOUD_PULL_INTERVAL_MS);
 }
 
 async function pullFromCloud() {
@@ -102,7 +174,12 @@ async function pullFromCloud() {
 
     const data = await response.json();
     if (!Array.isArray(data) || !data.length || !data[0].payload) {
-      setSyncStatus("Sincronização ativa: nuvem conectada");
+      if (state.products.length) {
+        await upsertCloudPayload();
+        setSyncStatus("Sincronização ativa: dados enviados para nuvem", "ok");
+      } else {
+        setSyncStatus("Sincronização ativa: nuvem conectada", "ok");
+      }
       return false;
     }
 
@@ -116,7 +193,7 @@ async function pullFromCloud() {
 
     return false;
   } catch {
-    setSyncStatus("Sincronização com erro: usando dados locais", "warn");
+    setSyncStatus("Sincronização com erro: configure/verifique a nuvem", "warn");
     return false;
   } finally {
     cloudSyncBusy = false;
@@ -127,26 +204,7 @@ async function pushToCloud() {
   if (!cloudEnabled() || cloudSyncBusy) return;
   cloudSyncBusy = true;
   try {
-    const response = await fetch(cloudBaseUrl(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: cloudConfig.supabaseAnonKey,
-        Authorization: `Bearer ${cloudConfig.supabaseAnonKey}`,
-        Prefer: "resolution=merge-duplicates",
-      },
-      body: JSON.stringify([
-        {
-          list_id: cloudConfig.listId,
-          payload: state.products,
-          updated_at: new Date().toISOString(),
-        },
-      ]),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erro ao salvar nuvem (${response.status})`);
-    }
+    await upsertCloudPayload();
 
     setSyncStatus("Sincronização ativa: salvo na nuvem", "ok");
   } catch {
@@ -539,6 +597,19 @@ function onTabClick(event) {
   switchTab(tab);
 }
 
+async function onCloudFormSubmit(event) {
+  event.preventDefault();
+  cloudConfig.supabaseUrl = els.cloudUrl.value.trim();
+  cloudConfig.supabaseAnonKey = els.cloudKey.value.trim();
+  cloudConfig.listId = els.cloudListId.value.trim() || "apartamento-marjana-everton";
+  cloudConfig.enabled = true;
+  saveCloudConfig();
+
+  setSyncStatus("Sincronização: conectando nuvem...");
+  await pullFromCloud();
+  startCloudPolling();
+}
+
 function setupEvents() {
   els.productForm.addEventListener("submit", addProduct);
   els.priceForm.addEventListener("submit", addPrice);
@@ -547,9 +618,12 @@ function setupEvents() {
   els.searchInput.addEventListener("input", onSearch);
   els.tabBtnProducts.addEventListener("click", onTabClick);
   els.tabBtnPrices.addEventListener("click", onTabClick);
+  els.cloudForm.addEventListener("submit", onCloudFormSubmit);
 }
 
 async function init() {
+  loadCloudConfig();
+  hydrateCloudForm();
   loadState();
   els.priceDate.value = todayISO();
   setupEvents();
@@ -559,11 +633,9 @@ async function init() {
   if (cloudEnabled()) {
     setSyncStatus("Sincronização: conectando nuvem...");
     await pullFromCloud();
-    window.setInterval(() => {
-      void pullFromCloud();
-    }, CLOUD_PULL_INTERVAL_MS);
+    startCloudPolling();
   } else {
-    setSyncStatus("Sincronização: local (somente neste aparelho)");
+    setSyncStatus("Sincronização: configure a nuvem na aba Preços", "warn");
   }
 }
 
